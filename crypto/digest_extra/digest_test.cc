@@ -31,6 +31,7 @@
 #include <openssl/nid.h>
 #include <openssl/obj.h>
 #include <openssl/sha.h>
+#include <openssl/sm3.h>
 
 #include "../internal.h"
 #include "../test/test_util.h"
@@ -56,7 +57,7 @@ static const MD sha512 = { "SHA512", &EVP_sha512, &SHA512 };
 static const MD sha512_256 = { "SHA512-256", &EVP_sha512_256, &SHA512_256 };
 static const MD md5_sha1 = { "MD5-SHA1", &EVP_md5_sha1, nullptr };
 static const MD blake2b256 = { "BLAKE2b-256", &EVP_blake2b256, nullptr };
-
+static const MD sm3 = { "SM3", &EVP_sm3, &SM3 };
 struct DigestTestVector {
   // md is the digest to test.
   const MD &md;
@@ -150,6 +151,12 @@ static const DigestTestVector kTestVectors[] = {
     // BLAKE2b-256 tests.
     {blake2b256, "abc", 1,
      "bddd813c634239723171ef3fee98579b94964e3bb1cb3e427262c8c068d52319"},
+
+    // SM3 tests, from GM/T 0004-2012.
+    {sm3, "abc", 1,
+     "66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0"},
+    {sm3, "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd", 1,
+     "debe9ff92275b8a138604889c18e5a4d6fdb70e5387e5765293dcba39c0c5732"},
 };
 
 static void CompareDigest(const DigestTestVector *test,
@@ -274,6 +281,9 @@ TEST(DigestTest, Getters) {
   EXPECT_EQ(EVP_sha1(), EVP_get_digestbyobj(obj.get()));
   EXPECT_EQ(EVP_md5_sha1(), EVP_get_digestbyobj(OBJ_nid2obj(NID_md5_sha1)));
   EXPECT_EQ(EVP_sha1(), EVP_get_digestbyobj(OBJ_nid2obj(NID_sha1)));
+
+  EXPECT_EQ(EVP_sm3(), EVP_get_digestbyname("sm3"));
+  EXPECT_EQ(EVP_sm3(), EVP_get_digestbyobj(OBJ_nid2obj(NID_sm3)));
 }
 
 TEST(DigestTest, ASN1) {

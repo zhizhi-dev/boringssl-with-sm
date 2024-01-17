@@ -105,6 +105,7 @@
 #include "sha/sha1.c"
 #include "sha/sha256.c"
 #include "sha/sha512.c"
+#include "sm3/sm3.c"
 #include "tls/kdf.c"
 
 

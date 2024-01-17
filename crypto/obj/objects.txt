@@ -30,6 +30,10 @@ member-body 840		: ISO-US		: ISO US Member Body
 ISO-US 10040		: X9-57			: X9.57
 X9-57 4			: X9cm			: X9.57 CM ?
 
+member-body 156         : ISO-CN        : ISO CN Member Body
+ISO-CN 10197            : oscca
+oscca 1                 : sm-scheme
+
 !Cname dsa
 X9cm 1			: DSA			: dsaEncryption
 X9cm 3			: DSA-SHA1		: dsaWithSHA1
@@ -363,6 +367,16 @@ rsadsi 2 5		: MD5			: md5
 			: MD5-SHA1		: md5-sha1
 rsadsi 2 6		:			: hmacWithMD5
 rsadsi 2 7		:			: hmacWithSHA1
+
+sm-scheme 301           : SM2                   : sm2
+
+sm-scheme 401           : SM3                   : sm3
+sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
+
+sm-scheme 501           : SM2-SM3               : SM2-with-SM3
+
+# From GM/T 0091-2020
+sm3 3 1			:			: hmacWithSM3
 
 # From RFC 4231
 rsadsi 2 8		:			: hmacWithSHA224
