@@ -59,6 +59,7 @@
 #include "cipher/cipher.c"
 #include "cipher/e_aes.c"
 #include "cipher/e_aesccm.c"
+#include "cipher/e_sm4.c"
 #include "cmac/cmac.c"
 #include "dh/check.c"
 #include "dh/dh.c"
@@ -106,6 +107,7 @@
 #include "sha/sha256.c"
 #include "sha/sha512.c"
 #include "sm3/sm3.c"
+#include "sm4/sm4.c"
 #include "tls/kdf.c"
 
 

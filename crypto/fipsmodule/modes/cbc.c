@@ -54,7 +54,7 @@
 
 
 void CRYPTO_cbc128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void *key, uint8_t ivec[16],
                            block128_f block) {
   assert(key != NULL && ivec != NULL);
   if (len == 0) {
@@ -95,7 +95,7 @@ void CRYPTO_cbc128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 }
 
 void CRYPTO_cbc128_decrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void *key, uint8_t ivec[16],
                            block128_f block) {
   assert(key != NULL && ivec != NULL);
   if (len == 0) {

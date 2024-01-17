@@ -120,6 +120,16 @@ static const EVP_CIPHER *GetCipher(const std::string &name) {
     return EVP_aes_256_gcm();
   } else if (name == "AES-256-OFB") {
     return EVP_aes_256_ofb();
+  } else if (name == "SM4-ECB") {
+    return EVP_sm4_ecb();
+  } else if (name == "SM4-CBC") {
+    return EVP_sm4_cbc();
+  } else if (name == "SM4-CFB") {
+    return EVP_sm4_cfb();
+  } else if (name == "SM4-OFB") {
+    return EVP_sm4_ofb();
+  } else if (name == "SM4-CTR") {
+    return EVP_sm4_ctr();
   }
   return nullptr;
 }
@@ -499,6 +509,16 @@ TEST(CipherTest, TestVectors) {
   FileTestGTest("crypto/cipher_extra/test/cipher_tests.txt", CipherFileTest);
 }
 
+TEST(CipherTest, SM4Vectors) {
+  FileTestGTest("crypto/cipher_extra/test/cipher_sm4_tests.txt",
+                CipherFileTest);
+}
+
+TEST(CipherTest, SM4_CFB) {
+  FileTestGTest("crypto/cipher_extra/test/sm4_cfb_tests.txt",
+                CipherFileTest);
+}
+
 TEST(CipherTest, CAVP_AES_128_CBC) {
   FileTestGTest("crypto/cipher_extra/test/nist_cavp/aes_128_cbc.txt",
                 CipherFileTest);
@@ -538,6 +558,7 @@ TEST(CipherTest, CAVP_TDES_ECB) {
   FileTestGTest("crypto/cipher_extra/test/nist_cavp/tdes_ecb.txt",
                 CipherFileTest);
 }
+
 
 TEST(CipherTest, WycheproofAESCBC) {
   FileTestGTest("third_party/wycheproof_testvectors/aes_cbc_pkcs5_test.txt",

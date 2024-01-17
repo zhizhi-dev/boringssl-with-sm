@@ -123,3 +123,13 @@ HMAC = SHA1
 Input = "My test data"
 Key = "12345"
 Output = 7dbe8c764c068e3bcd6e6b0fbcd5e6fc197b15bb
+
+HMAC = SM3
+Input = "My test data"
+Key = "123456"
+Output = 5c35e5dc8c33207a7fb75cae08a303b88e03e2469917e2feec0c29ff34c740ab
+
+HMAC = SM3
+Input = "Hello World"
+Key = "TestSecret"
+Output = 9d91da552268ddf11b9f69662773a66c6375b250336dfb9293e7e2611c36d79f

@@ -39,6 +39,11 @@ void EVP_CIPHER_do_all_sorted(void (*callback)(const EVP_CIPHER *cipher,
   callback(EVP_des_ede(), "DES-EDE", NULL, arg);
   callback(EVP_des_ede_cbc(), "DES-EDE-CBC", NULL, arg);
   callback(EVP_des_ede3_cbc(), "DES-EDE3-CBC", NULL, arg);
+  callback(EVP_sm4_ecb(), "SM4-ECB", NULL, arg);
+  callback(EVP_sm4_cbc(), "SM4-CBC", NULL, arg);
+  callback(EVP_sm4_cfb(), "SM4-cfb", NULL, arg);
+  callback(EVP_sm4_ofb(), "SM4-OFB", NULL, arg);
+  callback(EVP_sm4_ctr(), "SM4-CTR", NULL, arg);
   callback(EVP_rc2_cbc(), "RC2-CBC", NULL, arg);
   callback(EVP_rc4(), "RC4", NULL, arg);
 
@@ -63,6 +68,11 @@ void EVP_CIPHER_do_all_sorted(void (*callback)(const EVP_CIPHER *cipher,
   callback(EVP_des_ede(), "des-ede", NULL, arg);
   callback(EVP_des_ede_cbc(), "des-ede-cbc", NULL, arg);
   callback(EVP_des_ede3_cbc(), "des-ede3-cbc", NULL, arg);
+  callback(EVP_sm4_ecb(), "sm4-ecb", NULL, arg);
+  callback(EVP_sm4_cbc(), "sm4-cbc", NULL, arg);
+  callback(EVP_sm4_cfb(), "sm4-cfb", NULL, arg);
+  callback(EVP_sm4_ofb(), "sm4-ofb", NULL, arg);
+  callback(EVP_sm4_ctr(), "sm4-ctr", NULL, arg);  
   callback(EVP_rc2_cbc(), "rc2-cbc", NULL, arg);
   callback(EVP_rc4(), "rc4", NULL, arg);
 }

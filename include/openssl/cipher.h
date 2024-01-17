@@ -510,6 +510,14 @@ OPENSSL_EXPORT const EVP_CIPHER *EVP_cast5_ecb(void);
 // EVP_cast5_cbc is CAST5 in CBC mode and is only available in decrepit.
 OPENSSL_EXPORT const EVP_CIPHER *EVP_cast5_cbc(void);
 
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_ecb(void);
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_cbc(void);
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_cfb128(void);
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_cfb(void);
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_ofb128(void);
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_ofb(void);
+OPENSSL_EXPORT const EVP_CIPHER *EVP_sm4_ctr(void);
+
 // The following flags do nothing and are included only to make it easier to
 // compile code with BoringSSL.
 #define EVP_CIPHER_CTX_FLAG_WRAP_ALLOW 0

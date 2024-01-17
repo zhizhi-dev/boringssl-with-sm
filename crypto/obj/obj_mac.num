@@ -960,3 +960,13 @@ sm3		969
 sm3WithRSAEncryption		970
 SM2_with_SM3		971
 hmacWithSM3		972
+sm4_ecb		973
+sm4_cbc		974
+sm4_ofb128		975
+sm4_cfb128		976
+sm4_cfb1		977
+sm4_cfb8		978
+sm4_ctr		979
+sm4_gcm		980
+sm4_ccm		981
+sm4_xts		982

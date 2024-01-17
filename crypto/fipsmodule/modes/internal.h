@@ -74,7 +74,7 @@ extern "C" {
 //
 // These functions are called exclusively with AES, so we use the former.
 typedef void (*block128_f)(const uint8_t in[16], uint8_t out[16],
-                           const AES_KEY *key);
+                           const void* key);
 
 OPENSSL_INLINE void CRYPTO_xor16(uint8_t out[16], const uint8_t a[16],
                                  const uint8_t b[16]) {
@@ -95,7 +95,7 @@ OPENSSL_INLINE void CRYPTO_xor16(uint8_t out[16], const uint8_t a[16],
 
 // ctr128_f is the type of a function that performs CTR-mode encryption.
 typedef void (*ctr128_f)(const uint8_t *in, uint8_t *out, size_t blocks,
-                         const AES_KEY *key, const uint8_t ivec[16]);
+                         const void* key, const uint8_t ivec[16]);
 
 // CRYPTO_ctr128_encrypt encrypts (or decrypts, it's the same in CTR mode)
 // |len| bytes from |in| to |out| using |block| in counter mode. There's no
@@ -104,7 +104,7 @@ typedef void (*ctr128_f)(const uint8_t *in, uint8_t *out, size_t blocks,
 // call. The counter is a 128-bit, big-endian value in |ivec| and is
 // incremented by this function.
 void CRYPTO_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void* key, uint8_t ivec[16],
                            uint8_t ecount_buf[16], unsigned *num,
                            block128_f block);
 
@@ -113,7 +113,7 @@ void CRYPTO_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 // bits of the counter. This is useful when |ctr| can be an optimised
 // function.
 void CRYPTO_ctr128_encrypt_ctr32(const uint8_t *in, uint8_t *out, size_t len,
-                                 const AES_KEY *key, uint8_t ivec[16],
+                                 const void* key, uint8_t ivec[16],
                                  uint8_t ecount_buf[16], unsigned *num,
                                  ctr128_f ctr);
 
@@ -191,12 +191,12 @@ void CRYPTO_ghash_init(gmult_func *out_mult, ghash_func *out_hash,
 // CRYPTO_gcm128_init_key initialises |gcm_key| to use |block| (typically AES)
 // with the given key. |block_is_hwaes| is one if |block| is |aes_hw_encrypt|.
 OPENSSL_EXPORT void CRYPTO_gcm128_init_key(GCM128_KEY *gcm_key,
-                                           const AES_KEY *key, block128_f block,
+                                           const void* key, block128_f block,
                                            int block_is_hwaes);
 
 // CRYPTO_gcm128_setiv sets the IV (nonce) for |ctx|. The |key| must be the
 // same key that was passed to |CRYPTO_gcm128_init|.
-OPENSSL_EXPORT void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const AES_KEY *key,
+OPENSSL_EXPORT void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const void* key,
                                         const uint8_t *iv, size_t iv_len);
 
 // CRYPTO_gcm128_aad sets the authenticated data for an instance of GCM.
@@ -209,14 +209,14 @@ OPENSSL_EXPORT int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const uint8_t *aad,
 // must be the same key that was passed to |CRYPTO_gcm128_init|. It returns one
 // on success and zero otherwise.
 OPENSSL_EXPORT int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
-                                         const AES_KEY *key, const uint8_t *in,
+                                         const void* key, const uint8_t *in,
                                          uint8_t *out, size_t len);
 
 // CRYPTO_gcm128_decrypt decrypts |len| bytes from |in| to |out|. The |key|
 // must be the same key that was passed to |CRYPTO_gcm128_init|. It returns one
 // on success and zero otherwise.
 OPENSSL_EXPORT int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
-                                         const AES_KEY *key, const uint8_t *in,
+                                         const void* key, const uint8_t *in,
                                          uint8_t *out, size_t len);
 
 // CRYPTO_gcm128_encrypt_ctr32 encrypts |len| bytes from |in| to |out| using
@@ -225,7 +225,7 @@ OPENSSL_EXPORT int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 // passed to |CRYPTO_gcm128_init|. It returns one on success and zero
 // otherwise.
 OPENSSL_EXPORT int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
-                                               const AES_KEY *key,
+                                               const void* key,
                                                const uint8_t *in, uint8_t *out,
                                                size_t len, ctr128_f stream);
 
@@ -235,7 +235,7 @@ OPENSSL_EXPORT int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 // passed to |CRYPTO_gcm128_init|. It returns one on success and zero
 // otherwise.
 OPENSSL_EXPORT int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
-                                               const AES_KEY *key,
+                                               const void* key,
                                                const uint8_t *in, uint8_t *out,
                                                size_t len, ctr128_f stream);
 
@@ -282,10 +282,10 @@ void gcm_ghash_avx(uint8_t Xi[16], const u128 Htable[16], const uint8_t *in,
 
 #define HW_GCM
 size_t aesni_gcm_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                         const AES_KEY *key, uint8_t ivec[16],
+                         const void* key, uint8_t ivec[16],
                          const u128 Htable[16], uint8_t Xi[16]);
 size_t aesni_gcm_decrypt(const uint8_t *in, uint8_t *out, size_t len,
-                         const AES_KEY *key, uint8_t ivec[16],
+                         const void* key, uint8_t ivec[16],
                          const u128 Htable[16], uint8_t Xi[16]);
 #endif  // OPENSSL_X86_64
 
@@ -318,29 +318,33 @@ void gcm_ghash_neon(uint8_t Xi[16], const u128 Htable[16], const uint8_t *inp,
 #define HW_GCM
 // These functions are defined in aesv8-gcm-armv8.pl.
 void aes_gcm_enc_kernel(const uint8_t *in, uint64_t in_bits, void *out,
-                        void *Xi, uint8_t *ivec, const AES_KEY *key,
+                        void *Xi, uint8_t *ivec, const void* key,
                         const u128 Htable[16]);
 void aes_gcm_dec_kernel(const uint8_t *in, uint64_t in_bits, void *out,
-                        void *Xi, uint8_t *ivec, const AES_KEY *key,
+                        void *Xi, uint8_t *ivec, const void* key,
                         const u128 Htable[16]);
 #endif
 
 #endif
 #endif  // OPENSSL_NO_ASM
 
-
+// ECB
+typedef void (*ecb128_f) (const uint8_t *in, uint8_t *out,
+                          size_t len, const void *key,
+                          int enc);
+                          
 // CBC.
 
 // cbc128_f is the type of a function that performs CBC-mode encryption.
 typedef void (*cbc128_f)(const uint8_t *in, uint8_t *out, size_t len,
-                         const AES_KEY *key, uint8_t ivec[16], int enc);
+                         const void* key, uint8_t ivec[16], int enc);
 
 // CRYPTO_cbc128_encrypt encrypts |len| bytes from |in| to |out| using the
 // given IV and block cipher in CBC mode. The input need not be a multiple of
 // 128 bits long, but the output will round up to the nearest 128 bit multiple,
 // zero padding the input if needed. The IV will be updated on return.
 void CRYPTO_cbc128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void* key, uint8_t ivec[16],
                            block128_f block);
 
 // CRYPTO_cbc128_decrypt decrypts |len| bytes from |in| to |out| using the
@@ -348,7 +352,7 @@ void CRYPTO_cbc128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 // bits then only that many bytes will be written, but a multiple of 128 bits
 // is always read from |in|. The IV will be updated on return.
 void CRYPTO_cbc128_decrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void* key, uint8_t ivec[16],
                            block128_f block);
 
 
@@ -360,7 +364,7 @@ void CRYPTO_cbc128_decrypt(const uint8_t *in, uint8_t *out, size_t len,
 // stored in |ivec| and |*num|, the latter must be zero before the initial
 // call.
 void CRYPTO_ofb128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16], unsigned *num,
+                           const void* key, uint8_t ivec[16], unsigned *num,
                            block128_f block);
 
 
@@ -371,25 +375,25 @@ void CRYPTO_ofb128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 // |len| be a multiple of any value and any partial blocks are stored in |ivec|
 // and |*num|, the latter must be zero before the initial call.
 void CRYPTO_cfb128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16], unsigned *num,
+                           const void* key, uint8_t ivec[16], unsigned *num,
                            int enc, block128_f block);
 
 // CRYPTO_cfb128_8_encrypt encrypts (or decrypts, if |enc| is zero) |len| bytes
 // from |in| to |out| using |block| in CFB-8 mode. Prior to the first call
 // |num| should be set to zero.
 void CRYPTO_cfb128_8_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                             const AES_KEY *key, uint8_t ivec[16],
+                             const void* key, uint8_t ivec[16],
                              unsigned *num, int enc, block128_f block);
 
 // CRYPTO_cfb128_1_encrypt encrypts (or decrypts, if |enc| is zero) |len| bytes
 // from |in| to |out| using |block| in CFB-1 mode. Prior to the first call
 // |num| should be set to zero.
 void CRYPTO_cfb128_1_encrypt(const uint8_t *in, uint8_t *out, size_t bits,
-                             const AES_KEY *key, uint8_t ivec[16],
+                             const void* key, uint8_t ivec[16],
                              unsigned *num, int enc, block128_f block);
 
 size_t CRYPTO_cts128_encrypt_block(const uint8_t *in, uint8_t *out, size_t len,
-                                   const AES_KEY *key, uint8_t ivec[16],
+                                   const void* key, uint8_t ivec[16],
                                    block128_f block);
 
 

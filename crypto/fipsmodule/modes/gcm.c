@@ -134,13 +134,13 @@ void gcm_init_ssse3(u128 Htable[16], const uint64_t H[2]) {
 
 #if defined(HW_GCM) && defined(OPENSSL_X86_64)
 static size_t hw_gcm_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                             const AES_KEY *key, uint8_t ivec[16],
+                             const void *key, uint8_t ivec[16],
                              uint8_t Xi[16], const u128 Htable[16]) {
   return aesni_gcm_encrypt(in, out, len, key, ivec, Htable, Xi);
 }
 
 static size_t hw_gcm_decrypt(const uint8_t *in, uint8_t *out, size_t len,
-                             const AES_KEY *key, uint8_t ivec[16],
+                             const void *key, uint8_t ivec[16],
                              uint8_t Xi[16], const u128 Htable[16]) {
   return aesni_gcm_decrypt(in, out, len, key, ivec, Htable, Xi);
 }
@@ -149,7 +149,7 @@ static size_t hw_gcm_decrypt(const uint8_t *in, uint8_t *out, size_t len,
 #if defined(HW_GCM) && defined(OPENSSL_AARCH64)
 
 static size_t hw_gcm_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                             const AES_KEY *key, uint8_t ivec[16],
+                             const void *key, uint8_t ivec[16],
                              uint8_t Xi[16], const u128 Htable[16]) {
   const size_t len_blocks = len & kSizeTWithoutLower4Bits;
   if (!len_blocks) {
@@ -160,7 +160,7 @@ static size_t hw_gcm_encrypt(const uint8_t *in, uint8_t *out, size_t len,
 }
 
 static size_t hw_gcm_decrypt(const uint8_t *in, uint8_t *out, size_t len,
-                             const AES_KEY *key, uint8_t ivec[16],
+                             const void *key, uint8_t ivec[16],
                              uint8_t Xi[16], const u128 Htable[16]) {
   const size_t len_blocks = len & kSizeTWithoutLower4Bits;
   if (!len_blocks) {
@@ -235,7 +235,7 @@ void CRYPTO_ghash_init(gmult_func *out_mult, ghash_func *out_hash,
   *out_hash = gcm_ghash_nohw;
 }
 
-void CRYPTO_gcm128_init_key(GCM128_KEY *gcm_key, const AES_KEY *aes_key,
+void CRYPTO_gcm128_init_key(GCM128_KEY *gcm_key, const void *aes_key,
                             block128_f block, int block_is_hwaes) {
   OPENSSL_memset(gcm_key, 0, sizeof(*gcm_key));
   gcm_key->block = block;
@@ -255,7 +255,7 @@ void CRYPTO_gcm128_init_key(GCM128_KEY *gcm_key, const AES_KEY *aes_key,
 #endif
 }
 
-void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const AES_KEY *key,
+void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const void *key,
                          const uint8_t *iv, size_t len) {
 #ifdef GCM_FUNCREF
   void (*gcm_gmult_p)(uint8_t Xi[16], const u128 Htable[16]) =
@@ -358,7 +358,7 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const uint8_t *aad, size_t len) {
   return 1;
 }
 
-int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const AES_KEY *key,
+int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const void *key,
                           const uint8_t *in, uint8_t *out, size_t len) {
   block128_f block = ctx->gcm_key.block;
 #ifdef GCM_FUNCREF
@@ -439,7 +439,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const AES_KEY *key,
   return 1;
 }
 
-int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const AES_KEY *key,
+int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const void *key,
                           const unsigned char *in, unsigned char *out,
                           size_t len) {
   block128_f block = ctx->gcm_key.block;
@@ -525,7 +525,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const AES_KEY *key,
   return 1;
 }
 
-int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const AES_KEY *key,
+int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const void *key,
                                 const uint8_t *in, uint8_t *out, size_t len,
                                 ctr128_f stream) {
 #ifdef GCM_FUNCREF
@@ -612,7 +612,7 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx, const AES_KEY *key,
   return 1;
 }
 
-int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx, const AES_KEY *key,
+int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx, const void *key,
                                 const uint8_t *in, uint8_t *out, size_t len,
                                 ctr128_f stream) {
 #ifdef GCM_FUNCREF

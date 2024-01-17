@@ -82,7 +82,7 @@ static_assert(16 % sizeof(crypto_word_t) == 0,
 // of the IV.  This implementation takes NO responsibility for checking that
 // the counter doesn't overflow into the rest of the IV when incremented.
 void CRYPTO_ctr128_encrypt(const uint8_t *in, uint8_t *out, size_t len,
-                           const AES_KEY *key, uint8_t ivec[16],
+                           const void *key, uint8_t ivec[16],
                            uint8_t ecount_buf[16], unsigned int *num,
                            block128_f block) {
   unsigned int n;
@@ -131,7 +131,7 @@ static void ctr96_inc(uint8_t *counter) {
 }
 
 void CRYPTO_ctr128_encrypt_ctr32(const uint8_t *in, uint8_t *out, size_t len,
-                                 const AES_KEY *key, uint8_t ivec[16],
+                                 const void *key, uint8_t ivec[16],
                                  uint8_t ecount_buf[16], unsigned int *num,
                                  ctr128_f func) {
   unsigned int n, ctr32;

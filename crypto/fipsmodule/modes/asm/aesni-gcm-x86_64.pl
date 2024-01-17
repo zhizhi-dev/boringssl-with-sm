@@ -433,7 +433,7 @@ ___
 ######################################################################
 #
 # size_t aesni_gcm_[en|de]crypt(const void *inp, void *out, size_t len,
-#		const AES_KEY *key, unsigned char iv[16], const u128 *Htbl[9],
+#		const void *key, unsigned char iv[16], const u128 *Htbl[9],
 #		u128 *Xip);
 $code.=<<___;
 .globl	aesni_gcm_decrypt
