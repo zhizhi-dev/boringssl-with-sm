@@ -392,6 +392,9 @@ bool Client(const std::vector<std::string> &args) {
 
   bssl::UniquePtr<SSL_CTX> ctx(SSL_CTX_new(TLS_method()));
 
+  // force SM4 cipher suites
+  SSL_CTX_set_sm4_enabled(ctx.get(), 1);
+
   const char *keylog_file = getenv("SSLKEYLOGFILE");
   if (keylog_file) {
     g_keylog_file = fopen(keylog_file, "a");

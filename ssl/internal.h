@@ -572,16 +572,24 @@ BSSL_NAMESPACE_BEGIN
 
 #define SSL_AES (SSL_AES128 | SSL_AES256 | SSL_AES128GCM | SSL_AES256GCM)
 
+# define SSL_SM4CCM              0x01000000U
+# define SSL_SM4GCM              0x02000000U
+# define SSL_SM4                 0x04000000U
+
 // Bits for |algorithm_mac| (symmetric authentication).
 #define SSL_SHA1 0x00000001u
 #define SSL_SHA256 0x00000002u
 // SSL_AEAD is set for all AEADs.
 #define SSL_AEAD 0x00000004u
 
+#define SSL_SM3 0x00001000U
+
 // Bits for |algorithm_prf| (handshake digest).
 #define SSL_HANDSHAKE_MAC_DEFAULT 0x1
 #define SSL_HANDSHAKE_MAC_SHA256 0x2
 #define SSL_HANDSHAKE_MAC_SHA384 0x4
+
+#define SSL_HANDSHAKE_MAC_SM3 0x5
 
 // SSL_MAX_MD_SIZE is size of the largest hash function used in TLS, SHA-384.
 #define SSL_MAX_MD_SIZE 48
@@ -3157,6 +3165,8 @@ struct SSL_CONFIG {
   // alps_use_new_codepoint if set indicates we use new ALPS extension codepoint
   // to negotiate and convey application settings.
   bool alps_use_new_codepoint : 1;
+
+  bool sm4_ciphers_enabled : 1;
 };
 
 // From RFC 8446, used in determining PSK modes.
@@ -3766,6 +3776,8 @@ struct ssl_ctx_st {
   // |aes_hw_override| is true.
   bool aes_hw_override_value : 1;
 
+  bool sm4_ciphers_enabled : 1;
+  
  private:
   ~ssl_ctx_st();
   friend OPENSSL_EXPORT void SSL_CTX_free(SSL_CTX *);

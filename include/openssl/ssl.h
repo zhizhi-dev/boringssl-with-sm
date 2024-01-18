@@ -4610,6 +4610,8 @@ OPENSSL_EXPORT int SSL_used_hello_retry_request(const SSL *ssl);
 // https://bugs.openjdk.java.net/browse/JDK-8213202
 OPENSSL_EXPORT void SSL_set_jdk11_workaround(SSL *ssl, int enable);
 
+// 
+OPENSSL_EXPORT void SSL_CTX_set_sm4_enabled(SSL_CTX *ctx, int enabled);
 
 // Deprecated functions.
 

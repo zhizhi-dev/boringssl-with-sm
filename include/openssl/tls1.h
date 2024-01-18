@@ -459,6 +459,9 @@ extern "C" {
 #define TLS1_3_CK_AES_256_GCM_SHA384 0x03001302
 #define TLS1_3_CK_CHACHA20_POLY1305_SHA256 0x03001303
 
+#define TLS1_3_CK_SM4_GCM_SM3 0x030000C6
+#define TLS1_3_CK_SM4_CCM_SM3 0x030000C7
+
 // The following constants are legacy aliases of |TLS1_3_CK_*|.
 // TODO(davidben): Migrate callers to the new name and remove these.
 #define TLS1_CK_AES_128_GCM_SHA256 TLS1_3_CK_AES_128_GCM_SHA256
@@ -638,6 +641,9 @@ extern "C" {
 #define TLS1_3_RFC_AES_128_GCM_SHA256 "TLS_AES_128_GCM_SHA256"
 #define TLS1_3_RFC_AES_256_GCM_SHA384 "TLS_AES_256_GCM_SHA384"
 #define TLS1_3_RFC_CHACHA20_POLY1305_SHA256 "TLS_CHACHA20_POLY1305_SHA256"
+
+#define TLS1_3_RFC_SM4_CCM_SM3 "TLS_SM4_CCM_SM3"
+#define TLS1_3_RFC_SM4_GCM_SM3 "TLS_SM4_GCM_SM3"
 
 // The following constants are legacy aliases of |TLS1_3_CK_*|.
 // TODO(bbe): Migrate callers to the new name and remove these.

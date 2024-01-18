@@ -660,6 +660,7 @@ SSL *SSL_new(SSL_CTX *ctx) {
   ssl->config->aes_hw_override = ctx->aes_hw_override;
   ssl->config->aes_hw_override_value = ctx->aes_hw_override_value;
   ssl->config->tls13_cipher_policy = ctx->tls13_cipher_policy;
+  ssl->config->sm4_ciphers_enabled = ctx->sm4_ciphers_enabled;
 
   if (!ssl->config->supported_group_list.CopyFrom(ctx->supported_group_list) ||
       !ssl->config->alpn_client_proto_list.CopyFrom(
@@ -3046,6 +3047,10 @@ void SSL_set_jdk11_workaround(SSL *ssl, int enable) {
     return;
   }
   ssl->config->jdk11_workaround = !!enable;
+}
+
+void SSL_CTX_set_sm4_enabled(SSL_CTX *ctx, int enabled) {
+  ctx->sm4_ciphers_enabled = enabled;
 }
 
 void SSL_set_quic_use_legacy_codepoint(SSL *ssl, int use_legacy) {

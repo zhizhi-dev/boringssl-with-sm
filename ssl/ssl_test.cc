@@ -1128,6 +1128,15 @@ TEST(SSLTest, CipherProperties) {
           NID_auth_any,
           NID_sha256,
       },
+      {
+          TLS1_3_CK_SM4_GCM_SM3,
+          TLS1_3_RFC_SM4_GCM_SM3,
+          NID_sm4_gcm,
+          NID_undef,
+          NID_kx_any,
+          NID_auth_any,
+          NID_sm3,
+      },      
   };
 
   for (const auto &t : kTests) {

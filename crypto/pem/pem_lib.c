@@ -203,6 +203,18 @@ static const EVP_CIPHER *cipher_by_name(const char *name) {
     return EVP_aes_192_cbc();
   } else if (0 == strcmp(name, SN_aes_256_cbc)) {
     return EVP_aes_256_cbc();
+  } else if (0 == strcmp(name, SN_sm4_cbc)) {
+    return EVP_sm4_cbc();
+  } else if (0 == strcmp(name, SN_sm4_ecb)) {
+    return EVP_sm4_ecb();
+  } else if (0 == strcmp(name, SN_sm4_ofb128)) {
+    return EVP_sm4_ofb128();
+  } else if (0 == strcmp(name, SN_sm4_cfb128)) {
+    return EVP_sm4_cfb128();
+  } else if (0 == strcmp(name, SN_sm4_ctr)) {
+    return EVP_sm4_ctr();
+  } else if (0 == strcmp(name, SN_sm4_gcm)) {
+    return EVP_sm4_128_gcm();
   } else {
     return NULL;
   }

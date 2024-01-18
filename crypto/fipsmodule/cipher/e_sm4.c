@@ -648,6 +648,98 @@ static int aead_sm4_gcm_open_gather(const EVP_AEAD_CTX *ctx, uint8_t *out,
   return 1;
 }
 
+struct aead_sm4_gcm_tls13_ctx {
+  struct aead_sm4_gcm_ctx gcm_ctx;
+  uint64_t min_next_nonce;
+  uint64_t mask;
+  uint8_t first;
+};
+
+static_assert(sizeof(((EVP_AEAD_CTX *)NULL)->state) >=
+                  sizeof(struct aead_sm4_gcm_tls13_ctx),
+              "AEAD state is too small");
+static_assert(alignof(union evp_aead_ctx_st_state) >=
+                  alignof(struct aead_sm4_gcm_tls13_ctx),
+              "AEAD state has insufficient alignment");
+              
+static int aead_sm4_gcm_tls13_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
+                                   size_t key_len, size_t requested_tag_len) {
+  struct aead_sm4_gcm_tls13_ctx *gcm_ctx =
+      (struct aead_sm4_gcm_tls13_ctx *) &ctx->state;
+
+  gcm_ctx->min_next_nonce = 0;
+  gcm_ctx->first = 1;
+
+  size_t actual_tag_len;
+  if (!aead_sm4_gcm_init_impl(&gcm_ctx->gcm_ctx, &actual_tag_len, key, key_len,
+                              requested_tag_len)) {
+    return 0;
+  }
+
+  ctx->tag_len = actual_tag_len;
+  return 1;
+}
+
+static int aead_sm4_gcm_tls13_seal_scatter(
+    const EVP_AEAD_CTX *ctx, uint8_t *out, uint8_t *out_tag,
+    size_t *out_tag_len, size_t max_out_tag_len, const uint8_t *nonce,
+    size_t nonce_len, const uint8_t *in, size_t in_len, const uint8_t *extra_in,
+    size_t extra_in_len, const uint8_t *ad, size_t ad_len) {
+  struct aead_sm4_gcm_tls13_ctx *gcm_ctx =
+      (struct aead_sm4_gcm_tls13_ctx *) &ctx->state;
+
+  if (nonce_len != SM4_GCM_NONCE_LENGTH) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_UNSUPPORTED_NONCE_SIZE);
+    return 0;
+  }
+
+  // The given nonces must be strictly monotonically increasing. See
+  // https://tools.ietf.org/html/rfc8446#section-5.3 for details of the TLS 1.3
+  // nonce construction.
+  uint64_t given_counter =
+      CRYPTO_load_u64_be(nonce + nonce_len - sizeof(uint64_t));
+
+  if (gcm_ctx->first) {
+    // In the first call the sequence number will be zero and therefore the
+    // given nonce will be 0 ^ mask = mask.
+    gcm_ctx->mask = given_counter;
+    gcm_ctx->first = 0;
+  }
+  given_counter ^= gcm_ctx->mask;
+
+  if (given_counter == UINT64_MAX ||
+      given_counter < gcm_ctx->min_next_nonce) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_INVALID_NONCE);
+    return 0;
+  }
+
+  gcm_ctx->min_next_nonce = given_counter + 1;
+
+  if (!aead_sm4_gcm_seal_scatter(ctx, out, out_tag, out_tag_len,
+                                 max_out_tag_len, nonce, nonce_len, in, in_len,
+                                 extra_in, extra_in_len, ad, ad_len)) {
+    return 0;
+  }
+
+  AEAD_GCM_verify_service_indicator(ctx);
+  return 1;
+}
+
+DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_sm4_128_gcm_tls13) {
+  memset(out, 0, sizeof(EVP_AEAD));
+
+  out->key_len = 16;
+  out->nonce_len = SM4_GCM_NONCE_LENGTH;
+  out->overhead = EVP_AEAD_SM4_GCM_TAG_LEN;
+  out->max_tag_len = EVP_AEAD_SM4_GCM_TAG_LEN;
+  out->seal_scatter_supports_extra_in = 1;
+
+  out->init = aead_sm4_gcm_tls13_init;
+  out->cleanup = aead_sm4_gcm_cleanup;
+  out->seal_scatter = aead_sm4_gcm_tls13_seal_scatter;
+  out->open_gather = aead_sm4_gcm_open_gather;
+}
+
 DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_sm4_128_gcm) {
   memset(out, 0, sizeof(EVP_AEAD));
 

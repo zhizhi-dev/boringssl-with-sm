@@ -247,6 +247,15 @@ static bool ssl_write_client_cipher_list(const SSL_HANDSHAKE *hs, CBB *out,
                                 ? ssl->config->aes_hw_override_value
                                 : EVP_has_aes_hardware();
 
+    // Add SM4-GCM-SM3 cipher suite
+    const bool has_sm4 = ssl->config->sm4_ciphers_enabled;
+    if (has_sm4) {
+      if (!ssl_add_tls13_cipher(&child, TLS1_3_CK_SM4_GCM_SM3 & 0xffff,
+                                ssl->config->tls13_cipher_policy)) {
+        return false;
+      }
+    }
+    
     if ((!has_aes_hw &&  //
          !ssl_add_tls13_cipher(&child,
                                TLS1_3_CK_CHACHA20_POLY1305_SHA256 & 0xffff,
