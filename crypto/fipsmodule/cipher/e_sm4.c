@@ -445,3 +445,220 @@ DEFINE_METHOD_FUNCTION(EVP_CIPHER, EVP_sm4_128_gcm) {
   out->cleanup = sm4_gcm_cleanup;
   out->ctrl = sm4_gcm_ctrl;
 }
+
+#define EVP_AEAD_SM4_GCM_TAG_LEN 16
+
+struct aead_sm4_gcm_ctx {
+  union {
+    double align;
+    SM4_KEY ks;
+  } ks;
+  GCM128_KEY gcm_key;
+  ctr128_f ctr;
+};
+
+
+static int aead_sm4_gcm_init_impl(struct aead_sm4_gcm_ctx *gctx,
+                                  size_t *out_tag_len, const uint8_t *key,
+                                  size_t key_len, size_t tag_len) {
+  const size_t key_bits = key_len * 8;
+
+  if (key_bits != 128) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_BAD_KEY_LENGTH);
+    return 0;  // EVP_AEAD_CTX_init should catch this.
+  }
+
+  if (tag_len == EVP_AEAD_DEFAULT_TAG_LENGTH) {
+    tag_len = EVP_AEAD_SM4_GCM_TAG_LEN;
+  }
+
+  if (tag_len > EVP_AEAD_SM4_GCM_TAG_LEN) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_TAG_TOO_LARGE);
+    return 0;
+  }
+
+  if (key) {
+    SM4_set_key(key, &gctx->ks.ks);
+    CRYPTO_gcm128_init_key(&gctx->gcm_key, &gctx->ks, (block128_f)SM4_encrypt, 0);
+    gctx->ctr = NULL;
+  }
+
+  *out_tag_len = tag_len;
+  return 1;
+}
+
+
+static int aead_sm4_gcm_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
+                             size_t key_len, size_t requested_tag_len) {
+  struct aead_sm4_gcm_ctx *gcm_ctx = (struct aead_sm4_gcm_ctx *) &ctx->state;
+
+  size_t actual_tag_len;
+  if (!aead_sm4_gcm_init_impl(gcm_ctx, &actual_tag_len, key, key_len,
+                              requested_tag_len)) {
+    return 0;
+  }
+
+  ctx->tag_len = actual_tag_len;
+  return 1;
+}
+
+static void aead_sm4_gcm_cleanup(EVP_AEAD_CTX *ctx) {}
+
+static int aead_sm4_gcm_seal_scatter_impl(
+    const struct aead_sm4_gcm_ctx *gcm_ctx,
+    uint8_t *out, uint8_t *out_tag, size_t *out_tag_len, size_t max_out_tag_len,
+    const uint8_t *nonce, size_t nonce_len,
+    const uint8_t *in, size_t in_len,
+    const uint8_t *extra_in, size_t extra_in_len,
+    const uint8_t *ad, size_t ad_len,
+    size_t tag_len) {
+  if (extra_in_len + tag_len < tag_len) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_TOO_LARGE);
+    return 0;
+  }
+  if (max_out_tag_len < extra_in_len + tag_len) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_BUFFER_TOO_SMALL);
+    return 0;
+  }
+  if (nonce_len == 0) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_INVALID_NONCE_SIZE);
+    return 0;
+  }
+
+  const SM4_KEY *key = &gcm_ctx->ks.ks;
+
+  GCM128_CONTEXT gcm;
+  OPENSSL_memset(&gcm, 0, sizeof(gcm));
+  OPENSSL_memcpy(&gcm.gcm_key, &gcm_ctx->gcm_key, sizeof(gcm.gcm_key));
+  CRYPTO_gcm128_setiv(&gcm, key, nonce, nonce_len);
+
+  if (ad_len > 0 && !CRYPTO_gcm128_aad(&gcm, ad, ad_len)) {
+    return 0;
+  }
+
+  if (gcm_ctx->ctr) {
+    if (!CRYPTO_gcm128_encrypt_ctr32(&gcm, key, in, out, in_len,
+                                     gcm_ctx->ctr)) {
+      return 0;
+    }
+  } else {
+    if (!CRYPTO_gcm128_encrypt(&gcm, key, in, out, in_len)) {
+      return 0;
+    }
+  }
+
+  if (extra_in_len) {
+    if (gcm_ctx->ctr) {
+      if (!CRYPTO_gcm128_encrypt_ctr32(&gcm, key, extra_in, out_tag,
+                                       extra_in_len, gcm_ctx->ctr)) {
+        return 0;
+      }
+    } else {
+      if (!CRYPTO_gcm128_encrypt(&gcm, key, extra_in, out_tag, extra_in_len)) {
+        return 0;
+      }
+    }
+  }
+
+  CRYPTO_gcm128_tag(&gcm, out_tag + extra_in_len, tag_len);
+  *out_tag_len = tag_len + extra_in_len;
+
+  return 1;
+}
+
+static int aead_sm4_gcm_seal_scatter(const EVP_AEAD_CTX *ctx, uint8_t *out,
+                                     uint8_t *out_tag, size_t *out_tag_len,
+                                     size_t max_out_tag_len,
+                                     const uint8_t *nonce, size_t nonce_len,
+                                     const uint8_t *in, size_t in_len,
+                                     const uint8_t *extra_in,
+                                     size_t extra_in_len,
+                                     const uint8_t *ad, size_t ad_len) {
+  const struct aead_sm4_gcm_ctx *gcm_ctx =
+      (const struct aead_sm4_gcm_ctx *)&ctx->state;
+  return aead_sm4_gcm_seal_scatter_impl(
+      gcm_ctx, out, out_tag, out_tag_len, max_out_tag_len, nonce, nonce_len, in,
+      in_len, extra_in, extra_in_len, ad, ad_len, ctx->tag_len);
+}
+
+static int aead_sm4_gcm_open_gather_impl(const struct aead_sm4_gcm_ctx *gcm_ctx,
+                                         uint8_t *out,
+                                         const uint8_t *nonce, size_t nonce_len,
+                                         const uint8_t *in, size_t in_len,
+                                         const uint8_t *in_tag,
+                                         size_t in_tag_len,
+                                         const uint8_t *ad, size_t ad_len,
+                                         size_t tag_len) {
+  uint8_t tag[EVP_AEAD_SM4_GCM_TAG_LEN];
+
+  if (nonce_len == 0) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_INVALID_NONCE_SIZE);
+    return 0;
+  }
+
+  if (in_tag_len != tag_len) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_BAD_DECRYPT);
+    return 0;
+  }
+
+  const SM4_KEY *key = &gcm_ctx->ks.ks;
+
+  GCM128_CONTEXT gcm;
+  OPENSSL_memset(&gcm, 0, sizeof(gcm));
+  OPENSSL_memcpy(&gcm.gcm_key, &gcm_ctx->gcm_key, sizeof(gcm.gcm_key));
+  CRYPTO_gcm128_setiv(&gcm, key, nonce, nonce_len);
+
+  if (!CRYPTO_gcm128_aad(&gcm, ad, ad_len)) {
+    return 0;
+  }
+
+  if (gcm_ctx->ctr) {
+    if (!CRYPTO_gcm128_decrypt_ctr32(&gcm, key, in, out, in_len,
+                                     gcm_ctx->ctr)) {
+      return 0;
+    }
+  } else {
+    if (!CRYPTO_gcm128_decrypt(&gcm, key, in, out, in_len)) {
+      return 0;
+    }
+  }
+
+  CRYPTO_gcm128_tag(&gcm, tag, tag_len);
+  if (CRYPTO_memcmp(tag, in_tag, tag_len) != 0) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_BAD_DECRYPT);
+    return 0;
+  }
+
+  return 1;
+}
+
+static int aead_sm4_gcm_open_gather(const EVP_AEAD_CTX *ctx, uint8_t *out,
+                                    const uint8_t *nonce, size_t nonce_len,
+                                    const uint8_t *in, size_t in_len,
+                                    const uint8_t *in_tag, size_t in_tag_len,
+                                    const uint8_t *ad, size_t ad_len) {
+  struct aead_sm4_gcm_ctx *gcm_ctx = (struct aead_sm4_gcm_ctx *)&ctx->state;
+  if (!aead_sm4_gcm_open_gather_impl(gcm_ctx, out, nonce, nonce_len, in, in_len,
+                                     in_tag, in_tag_len, ad, ad_len,
+                                     ctx->tag_len)) {
+    return 0;
+  }
+
+  AEAD_GCM_verify_service_indicator(ctx);
+  return 1;
+}
+
+DEFINE_METHOD_FUNCTION(EVP_AEAD, EVP_aead_sm4_128_gcm) {
+  memset(out, 0, sizeof(EVP_AEAD));
+
+  out->key_len = 16;
+  out->nonce_len = SM4_GCM_NONCE_LENGTH;
+  out->overhead = EVP_AEAD_SM4_GCM_TAG_LEN;
+  out->max_tag_len = EVP_AEAD_SM4_GCM_TAG_LEN;
+  out->seal_scatter_supports_extra_in = 1;
+
+  out->init = aead_sm4_gcm_init;
+  out->cleanup = aead_sm4_gcm_cleanup;
+  out->seal_scatter = aead_sm4_gcm_seal_scatter;
+  out->open_gather = aead_sm4_gcm_open_gather;
+}

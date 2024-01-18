@@ -182,6 +182,9 @@ OPENSSL_EXPORT const EVP_AEAD *EVP_aead_aes_128_ccm_bluetooth_8(void);
 // and 13-byte nonces), as used in the Matter specification.
 OPENSSL_EXPORT const EVP_AEAD *EVP_aead_aes_128_ccm_matter(void);
 
+// EVP_aead_sm4_128_gcm is SM4-128 in Galois Counter Mode.
+OPENSSL_EXPORT const EVP_AEAD* EVP_aead_sm4_128_gcm(void);
+
 // EVP_has_aes_hardware returns one if we enable hardware support for fast and
 // constant-time AES-GCM.
 OPENSSL_EXPORT int EVP_has_aes_hardware(void);
