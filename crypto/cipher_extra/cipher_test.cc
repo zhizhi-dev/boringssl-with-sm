@@ -130,6 +130,8 @@ static const EVP_CIPHER *GetCipher(const std::string &name) {
     return EVP_sm4_ofb();
   } else if (name == "SM4-CTR") {
     return EVP_sm4_ctr();
+  }else if (name == "SM4-GCM") {
+    return EVP_sm4_128_gcm();
   }
   return nullptr;
 }
@@ -516,6 +518,11 @@ TEST(CipherTest, SM4Vectors) {
 
 TEST(CipherTest, SM4_CFB) {
   FileTestGTest("crypto/cipher_extra/test/sm4_cfb_tests.txt",
+                CipherFileTest);
+}
+
+TEST(CipherTest, SM4_GCM) {
+  FileTestGTest("crypto/cipher_extra/test/sm4_gcm_tests.txt",
                 CipherFileTest);
 }
 
