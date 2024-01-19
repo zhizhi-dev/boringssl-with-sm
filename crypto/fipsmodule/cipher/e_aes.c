@@ -212,7 +212,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const uint8_t *key,
       assert(bsaes_capable());
       dat->stream.ctr = vpaes_ctr32_encrypt_blocks_with_bsaes;
 #elif defined(VPAES_CTR32)
-      dat->stream.ctr = vpaes_ctr32_encrypt_blocks;
+      dat->stream.ctr = (ctr128_f)vpaes_ctr32_encrypt_blocks;
 #endif
     }
   } else {
@@ -313,9 +313,9 @@ ctr128_f aes_ctr_set_key(AES_KEY *aes_key, GCM128_KEY *gcm_key,
     }
 #if defined(BSAES)
     assert(bsaes_capable());
-    return vpaes_ctr32_encrypt_blocks_with_bsaes;
+    return (ctr128_f)vpaes_ctr32_encrypt_blocks_with_bsaes;
 #elif defined(VPAES_CTR32)
-    return vpaes_ctr32_encrypt_blocks;
+    return (ctr128_f)vpaes_ctr32_encrypt_blocks;
 #else
     return NULL;
 #endif
