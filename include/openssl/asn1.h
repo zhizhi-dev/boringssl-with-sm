@@ -1052,6 +1052,8 @@ OPENSSL_EXPORT int i2c_ASN1_INTEGER(const ASN1_INTEGER *in, uint8_t **outp);
 // |ASN1_INTEGER*|.
 DECLARE_ASN1_ITEM(ASN1_INTEGER)
 
+DECLARE_ASN1_ITEM(BIGNUM)
+
 // ASN1_INTEGER_set_uint64 sets |a| to an INTEGER with value |v|. It returns one
 // on success and zero on error.
 OPENSSL_EXPORT int ASN1_INTEGER_set_uint64(ASN1_INTEGER *out, uint64_t v);
